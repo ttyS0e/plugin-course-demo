@@ -32,7 +32,7 @@ jobs:
             const release = await github.repos.getReleaseByTag({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              process.env.RELEASE_TAG
+              "v1.0.0"
             });
 
             // Upload the release asset
@@ -40,7 +40,7 @@ jobs:
               owner: context.repo.owner,
               repo: context.repo.repo,
               release_id: release.data.id,
-              name: "kong-plugin-myplugin-1-1.rockspec",
+              name: "kong-plugin-myplugin-" + process.env.RELEASE_VER + "-1.rockspec",
               data: await fs.readFileSync("newfile.txt")
             });
 
