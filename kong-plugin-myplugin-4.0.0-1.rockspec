@@ -1,6 +1,6 @@
 local plugin_name = "myplugin"
 local package_name = "kong-plugin-" .. plugin_name
-local package_version = "dev"
+local package_version = "4.0.0"
 local rockspec_revision = "1"
 
 local github_account_name = "Kong"
