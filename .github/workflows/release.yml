@@ -75,6 +75,7 @@ jobs:
           mv kong-plugin-myplugin-dev-1.rockspec ${NEXT_VERSION_FILENAME}
           echo "> Moved rockspec file to new version: ${NEXT_VERSION_FILENAME}"
 
+          git add ${NEXT_VERSION_FILENAME}
           git commit -m "release ${NEW_VER}"
           git push
 
@@ -134,5 +135,6 @@ jobs:
           mv *.rockspec kong-plugin-myplugin-dev-1.rockspec
 
           sed -i "s/^local package_version = \"$NEW_VER\"/local package_version = \"dev\"/" kong-plugin-myplugin-dev-1.rockspec
+          git add kong-plugin-myplugin-dev-1.rockspec
           git commit -m "[ci] reset dev-1"
           git push
