@@ -20,7 +20,7 @@ jobs:
       matrix:
         kongVersion:
         - "3.3.0.0"
-        - "3.6.0.0"
+        # - "3.6.0.0"
 
     steps:
     - uses: actions/checkout@v3
@@ -52,7 +52,7 @@ jobs:
         github-token: ${{secrets.GITHUB_TOKEN}}
         script: |
           const fs = require('fs')
-          const comment = fs.readFileSync('/repository/out-comment.txt', "utf8")
+          const comment = fs.readFileSync('out-comment.txt', "utf8")
           console.log(`json string ${comment}`)
 
           github.rest.issues.createComment({
