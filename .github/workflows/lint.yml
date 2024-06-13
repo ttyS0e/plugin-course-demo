@@ -8,11 +8,12 @@ on:
   pull_request: {}
   push:
     branches:
-    - master
+    - main
 
 jobs:
   luacheck:
     runs-on: ubuntu-latest
+    permissions: write-all
 
     steps:
     - name: Checkout
