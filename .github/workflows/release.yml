@@ -17,121 +17,10 @@ jobs:
         with:
           fetch-tags: true
 
-      - uses: Kong/kong-pongo-action@v1
-        with:
-          pongo_version: "master"
-          kong_version: 3.3.0.0
-
-      - name: "Determine tag"
-        run: |
-          #!/bin/bash
-          cd $GITHUB_WORKSPACE
-
-          git config --global user.email "robot-cx@konghq.com"
-          git config --global user.name "Kong CX Robot"
-
-          git fetch origin 'refs/tags/*:refs/tags/*'
-          git fetch -a
-          git reset --hard origin/main
-
-          #get highest tag number
-          VERSION=`git tag -l --sort -version:refname | head -n 1`
-
-          #if no existing tag - set default version to 1.0.0
-          if [ -z "$VERSION" ]; then
-              VERSION="1.0.0"
-              VNUM1="1"
-              VNUM2="0"
-              VNUM3="0"
-              echo "ver: no existing tag - setting version to $VERSION"
-          else
-              echo "ver: $VERSION"
-              #replace . with space so can split into an array
-              VERSION_BITS=(${VERSION//./ })
-              
-              #get number parts and increase last one by 1
-              VNUM1=${VERSION_BITS[0]}
-              VNUM2=${VERSION_BITS[1]}
-              VNUM3=${VERSION_BITS[2]}
-              VNUM1=`echo $VNUM1 | sed 's/v//'`
-              
-              # Check for #major or #minor in commit message and increment the relevant version number
-              MAJOR=`git log --format=%B -n 1 HEAD | grep 'major:' || true`
-              MINOR=`git log --format=%B -n 1 HEAD | grep 'minor:' || true`
-              if [ "$MAJOR" ]; then
-                  echo "Update major version"
-                  VNUM1=$((VNUM1+1))
-                  VNUM2=0
-                  VNUM3=0
-              elif [ "$MINOR" ]; then
-                  echo "Update minor version"
-                  VNUM2=$((VNUM2+1))
-                  VNUM3=0
-              else
-                  echo "Update patch version"
-                  VNUM3=$((VNUM3+1))
-              fi
-          fi
-          
-          NEW_VER="$VNUM1.$VNUM2.$VNUM3"
-          sed -i "s/^local package_version = \"dev\"/local package_version = \"$NEW_VER\"/" kong-plugin-myplugin-dev-1.rockspec
-          echo "> Updated rockspec version key to ${NEW_VER}"
-
-          NEXT_VERSION_FILENAME="kong-plugin-myplugin-${NEW_VER}-1.rockspec"
-          mv kong-plugin-myplugin-dev-1.rockspec ${NEXT_VERSION_FILENAME}
-          rm -f kong-plugin-myplugin-dev-1.rockspec
-          echo "> Moved rockspec file to new version: ${NEXT_VERSION_FILENAME}"
-
-          git add kong-plugin-myplugin-dev-1.rockspec
-          git add kong-plugin-myplugin-$NEW_VER-1.rockspec
-          git commit -m "release ${NEW_VER}"
-          git push
-
-          #create new tag
-          NEW_TAG="v$VNUM1.$VNUM2.$VNUM3"
-          
-          echo "Updating $VERSION to $NEW_TAG"
-          
-          #get current hash and see if it already has a tag
-          GIT_COMMIT=`git rev-parse HEAD`
-          # NEEDS_TAG=`git describe --contains $GIT_COMMIT`
-          NEEDS_TAG=true
-          
-          #only tag if no tag already (would be better if the git describe command above could have a silent option)
-          if [ -z "$NEEDS_TAG" ]; then
-              echo "Tagged with $NEW_TAG (Ignoring fatal:cannot describe - this means commit is untagged) "
-          else
-              echo "Already a tag on this commit"
-          fi
-
-          echo "RELEASE_TAG=${NEW_TAG}" >> $GITHUB_ENV
-          echo "RELEASE_VER=${NEW_VER}" >> $GITHUB_ENV
-
-          pongo pack
-
-          cat $GITHUB_ENV
-
-      - name: "Create release"
-        uses: "actions/github-script@v6"
-        with:
-          github-token: "${{ secrets.GITHUB_TOKEN }}"
-          script: |
-            try {
-              const response = await github.rest.repos.createRelease({
-                draft: false,
-                generate_release_notes: true,
-                name: process.env.RELEASE_TAG,
-                owner: context.repo.owner,
-                prerelease: false,
-                repo: context.repo.repo,
-                tag_name: process.env.RELEASE_TAG,
-              });
-
-              core.exportVariable('RELEASE_ID', response.data.id);
-              core.exportVariable('RELEASE_UPLOAD_URL', response.data.upload_url);
-            } catch (error) {
-              core.setFailed(error.message);
-            }
+      - run: |
+          echo 'jj' > newfile.txt
+          echo "RELEASE_TAG=v1.0.0" >> $GITHUB_ENV
+          echo "RELEASE_VER=1.0.0" >> $GITHUB_ENV
 
       - name: Upload release attachment
         uses: actions/github-script@v4
@@ -151,22 +40,6 @@ jobs:
               repo: context.repo.repo,
               release_id: release.data.id,
               name: "kong-plugin-myplugin-" + process.env.RELEASE_VER + "-1.rockspec",
-              data: await fs.readFileSync("kong-plugin-myplugin-" + process.env.RELEASE_VER + "-1.rockspec")
+              data: await fs.readFileSync("newfile.txt")
             });
 
-      - name: "Set back to dev-1"
-        run: |
-          #!/bin/bash
-          cd $GITHUB_WORKSPACE
-
-          git fetch origin 'refs/tags/*:refs/tags/*'
-          git fetch -a
-          git reset --hard origin/main
-
-          mv kong-plugin-myplugin-$RELEASE_VER-1.rockspec kong-plugin-myplugin-dev-1.rockspec
-
-          sed -i "s/^local package_version = \"$RELEASE_VER\"/local package_version = \"dev\"/" kong-plugin-myplugin-dev-1.rockspec
-          git add kong-plugin-myplugin-dev-1.rockspec
-          git add kong-plugin-myplugin-$RELEASE_VER-1.rockspec
-          git commit -m "[ci] reset dev-1"
-          git push
