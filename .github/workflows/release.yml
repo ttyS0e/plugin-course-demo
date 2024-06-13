@@ -21,6 +21,9 @@ jobs:
           #!/bin/bash
           cd $GITHUB_WORKSPACE
 
+          git config --global user.email "robot-cx@konghq.com"
+          git config --global user.name "Kong CX Robot"
+
           git fetch origin 'refs/tags/*:refs/tags/*'
           git fetch -a
           git reset --hard origin/main
