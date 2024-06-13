@@ -133,9 +133,9 @@ jobs:
           git fetch -a
           git reset --hard origin/main
 
-          mv kong-plugin-myplugin-$NEW_VER-1.rockspec kong-plugin-myplugin-dev-1.rockspec
+          mv kong-plugin-myplugin-$RELEASE_VER-1.rockspec kong-plugin-myplugin-dev-1.rockspec
 
-          sed -i "s/^local package_version = \"$NEW_VER\"/local package_version = \"dev\"/" kong-plugin-myplugin-dev-1.rockspec
+          sed -i "s/^local package_version = \"$RELEASE_VER\"/local package_version = \"dev\"/" kong-plugin-myplugin-dev-1.rockspec
           git add kong-plugin-myplugin-dev-1.rockspec
           git commit -m "[ci] reset dev-1"
           git push
