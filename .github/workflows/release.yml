@@ -64,6 +64,14 @@ jobs:
               fi
           fi
           
+          NEW_VER="$VNUM1.$VNUM2.$VNUM3"
+          sed -i "s/^local package_version = \"dev-1\"/local package_version = \"$NEW_VER\"/" kong-plugin-myplugin-dev-1.rockspec
+          echo "> Updated rockspec version key to ${NEW_VER}"
+
+          NEXT_VERSION_FILENAME="kong-plugin-myplugin-${NEW_VER}-1.rockspec"
+          mv kong-plugin-myplugin-dev-1.rockspec ${NEXT_VERSION_FILENAME}
+          echo "> Moved rockspec file to new version: ${NEXT_VERSION_FILENAME}"
+
           #create new tag
           NEW_TAG="v$VNUM1.$VNUM2.$VNUM3"
           
@@ -82,6 +90,7 @@ jobs:
           fi
 
           echo "RELEASE_TAG=${NEW_TAG}" >> $GITHUB_ENV
+          echo "RELEASE_VER=${NEW_VER}" >> $GITHUB_ENV
 
           cat $GITHUB_ENV
 
@@ -106,3 +115,16 @@ jobs:
             } catch (error) {
               core.setFailed(error.message);
             }
+
+      - name: "Set back to dev-1"
+        run: |
+          #!/bin/bash
+          cd $GITHUB_WORKSPACE
+
+          git fetch origin 'refs/tags/*:refs/tags/*'
+          git fetch -a
+          git reset --hard origin/main
+
+          mv *.rockspec kong-plugin-myplugin-dev-1.rockspec
+
+          sed -i "s/^local package_version = \"$NEW_VER\"/local package_version = \"dev-1\"/" kong-plugin-myplugin-dev-1.rockspec
