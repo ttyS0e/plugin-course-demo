@@ -27,19 +27,20 @@ jobs:
         with:
           script: |
             const fs = require('fs');
+
             // Get release for this tag
             const release = await github.repos.getReleaseByTag({
               owner: context.repo.owner,
               repo: context.repo.repo,
               process.env.RELEASE_TAG
             });
-            print(release)
+
             // Upload the release asset
             await github.repos.uploadReleaseAsset({
               owner: context.repo.owner,
               repo: context.repo.repo,
               release_id: release.data.id,
-              name: "kong-plugin-myplugin-" + process.env.RELEASE_VER + "-1.rockspec",
+              name: "kong-plugin-myplugin-1-1.rockspec",
               data: await fs.readFileSync("newfile.txt")
             });
 
