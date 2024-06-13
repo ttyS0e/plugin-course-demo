@@ -16,6 +16,12 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-tags: true
+
+      - uses: Kong/kong-pongo-action@v1
+        with:
+          pongo_version: "master"
+          kong_version: 3.3.0.0
+
       - name: "Determine tag"
         run: |
           #!/bin/bash
@@ -101,6 +107,8 @@ jobs:
           echo "RELEASE_TAG=${NEW_TAG}" >> $GITHUB_ENV
           echo "RELEASE_VER=${NEW_VER}" >> $GITHUB_ENV
 
+          pongo pack
+
           cat $GITHUB_ENV
 
       - name: "Create release"
@@ -124,6 +132,27 @@ jobs:
             } catch (error) {
               core.setFailed(error.message);
             }
+
+      - name: Upload release attachment
+        uses: actions/github-script@v4
+        with:
+          script: |
+            const fs = require('fs');
+            const tag = context.ref.replace("refs/tags/", "");
+            // Get release for this tag
+            const release = await github.repos.getReleaseByTag({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              tag
+            });
+            // Upload the release asset
+            await github.repos.uploadReleaseAsset({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              release_id: release.data.id,
+              name: "app.zip",
+              data: await fs.readFileSync("kong-plugin-myplugin-" + process.env.RELEASE_VER + "-1.rockspec")
+            });
 
       - name: "Set back to dev-1"
         run: |
